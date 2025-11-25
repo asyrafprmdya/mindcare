@@ -28,14 +28,32 @@
             <li class="nav-section">
                 <div class="nav-section-title">Manajemen Admin</div>
                 <ul>
-                    <li class="nav-item"><a href="{{ route('admin.dashboard') }}" class="nav-link"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
-                    <li class="nav-item"><a href="{{ route('admin.pasien') }}" class="nav-link"><i class="fas fa-users"></i><span>Manajemen Pasien</span></a></li>
-                    <li class="nav-item"><a href="{{ route('admin.pengguna') }}" class="nav-link"><i class="fas fa-users-cog"></i><span>Manajemen Pengguna</span></a></li>
-                    <li class="nav-item"><a href="{{ route('admin.sistem') }}" class="nav-link active"><i class="fas fa-cogs"></i><span>Manajemen Sistem</span></a></li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                            <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.pasien') }}" class="nav-link {{ request()->routeIs('admin.pasien') ? 'active' : '' }}">
+                            <i class="fas fa-users"></i><span>Manajemen Pasien</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.pengguna') }}" class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}">
+                            <i class="fas fa-users-cog"></i><span>Manajemen Pengguna</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.sistem') }}" class="nav-link {{ request()->routeIs('admin.sistem') ? 'active' : '' }}">
+                            <i class="fas fa-cogs"></i><span>Manajemen Sistem</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-section">
-                <ul><li class="nav-item"><a href="{{ url('/logout') }}" class="nav-link" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li></ul>
+                <ul>
+                    <li class="nav-item"><a href="{{ route('logout') }}" class="nav-link" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
+                </ul>
             </li>
         </ul>
       </nav>
@@ -92,7 +110,7 @@
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                        </div>a
+                        </div>
                     </div>
                 </div>
             </div>

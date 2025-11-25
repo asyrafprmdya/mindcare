@@ -31,16 +31,32 @@
             <li class="nav-section">
                 <div class="nav-section-title">Manajemen Admin</div>
                 <ul>
-                    <li class="nav-item"><a href="{{ route('admin.dashboard') }}" class="nav-link active"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
-                    <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-users"></i><span>Manajemen Pasien</span></a></li>
-                    <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-users-cog"></i><span>Manajemen Pengguna</span></a></li>
-                    <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-cogs"></i><span>Manajemen Sistem</span></a></li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                            <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.pasien') }}" class="nav-link {{ request()->routeIs('admin.pasien') ? 'active' : '' }}">
+                            <i class="fas fa-users"></i><span>Manajemen Pasien</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.pengguna') }}" class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}">
+                            <i class="fas fa-users-cog"></i><span>Manajemen Pengguna</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.sistem') }}" class="nav-link {{ request()->routeIs('admin.sistem') ? 'active' : '' }}">
+                            <i class="fas fa-cogs"></i><span>Manajemen Sistem</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-section">
                 <div class="nav-section-title">Akun</div>
                 <ul>
-                    <li class="nav-item"><a href="{{ url('/logout') }}" class="nav-link" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
+                    <li class="nav-item"><a href="{{ route('logout') }}" class="nav-link" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
                 </ul>
             </li>
         </ul>
@@ -52,10 +68,10 @@
         <div class="header-top">
             <div class="welcome-text">
                 <h1>Dashboard Admin</h1>
-                <p>Selamat datang kembali, {{ Auth::user()->full_name }}!</p>
+                <p>Selamat datang kembali, {{ Auth::user()->full_name ?? 'Admin' }}!</p>
             </div>
             <div class="header-actions">
-                <a href="#" class="btn btn-primary">
+                <a href="{{ route('admin.pengguna') }}" class="btn btn-primary">
                     <i class="fas fa-user-plus"></i> <span>Tambah User Baru</span>
                 </a>
             </div>
@@ -100,7 +116,7 @@
             <div class="card fade-in" style="background:white; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden;">
                 <div class="card-header">
                     <h3 class="chart-title">Pengguna Baru (10 Terbaru)</h3>
-                    <a href="#" style="font-size: 13px; font-weight: 600; color: #8b5cf6;">Lihat Semua</a>
+                    <a href="{{ route('admin.pengguna') }}" style="font-size: 13px; font-weight: 600; color: #8b5cf6;">Lihat Semua</a>
                 </div>
                 <div class="card-body" style="padding:0;">
                     <div style="overflow-x:auto;">

@@ -6,9 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use App\Models\User;
 use App\Models\Patient;
-use Illuminate\Support\Facades\Schema;
 
 class AdminController extends Controller
 {
@@ -17,7 +17,7 @@ class AdminController extends Controller
         if (Auth::check() && Auth::user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
-        return view('admin.login'); // Mengarah ke resources/views/admin/login.blade.php
+        return view('admin.login'); // Pastikan file resources/views/admin/login.blade.php ada
     }
 
     public function login(Request $request) {
@@ -38,7 +38,7 @@ class AdminController extends Controller
         $totalUsers = User::count();
         $totalPatients = User::where('role', 'patient')->count();
         
-        // Cek tabel agar tidak error jika belum ada
+        // Cek tabel agar tidak error jika belum ada (Safe Coding)
         $totalAppointments = Schema::hasTable('appointments') ? DB::table('appointments')->count() : 0;
         $totalReviews = Schema::hasTable('ratings_reviews') ? DB::table('ratings_reviews')->count() : 0;
 
@@ -88,7 +88,7 @@ class AdminController extends Controller
 
     // --- 4. PASIEN ---
     public function pasien() {
-        // Join user & patient table
+        // Join user & patient table untuk mendapatkan data lengkap
         $patients = DB::table('users')
             ->leftJoin('patients', 'users.id', '=', 'patients.user_id')
             ->where('users.role', 'patient')
@@ -107,6 +107,7 @@ class AdminController extends Controller
                 'email' => $request->email, 'password' => Hash::make($request->password),
                 'phone' => $request->phone, 'role' => 'patient', 'is_active' => 1
             ]);
+            // Pastikan tabel patients memiliki kolom user_id, date_of_birth, address
             Patient::create(['user_id' => $user->id, 'date_of_birth' => $request->date_of_birth, 'address' => $request->address]);
         });
         return back()->with('success', 'Pasien ditambahkan.');
@@ -133,6 +134,7 @@ class AdminController extends Controller
     }
 
     public function updateSistem(Request $request) {
+        // Disini nanti logika simpan ke database settings jika ada tabelnya
         return back()->with('success', 'Pengaturan disimpan (Simulasi).');
     }
 }
