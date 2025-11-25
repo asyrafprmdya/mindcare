@@ -114,16 +114,16 @@
                 <div class="nav-section-title">Manajemen Admin</div>
                 <ul>
                     <li class="nav-item">
-                        <a href="#" class="nav-link"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+                        <a href="{{ route('admin.dashboard') }}" class="nav-link"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link"><i class="fas fa-users"></i><span>Manajemen Pasien</span></a>
+                        <a href="{{ route('admin.pasien') }}" class="nav-link"><i class="fas fa-users"></i><span>Manajemen Pasien</span></a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.users.index') }}" class="nav-link active"><i class="fas fa-users-cog"></i><span>Manajemen Pengguna</span></a>
+                        <a href="{{ route('admin.pengguna') }}" class="nav-link active"><i class="fas fa-users-cog"></i><span>Manajemen Pengguna</span></a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link"><i class="fas fa-cogs"></i><span>Manajemen Sistem</span></a>
+                        <a href="{{ route('admin.sistem') }}" class="nav-link"><i class="fas fa-cogs"></i><span>Manajemen Sistem</span></a>
                     </li>
                 </ul>
             </li>
@@ -221,7 +221,7 @@
                                     </a>
                                     
                                     {{-- Form Delete (Laravel Way) --}}
-                                    <form action="{{ route('admin.users.destroy', $u->id) }}" method="POST" class="delete-form" style="display:inline;">
+                                    <form action="{{ route('admin.pengguna.destroy', $u->id) }}" method="POST" class="delete-form" style="display:inline;">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn-sm btn-delete" title="Hapus Pengguna">
@@ -250,7 +250,7 @@
         </div>
         
         {{-- Form Tambah User (Mengarah ke Route Laravel) --}}
-        <form id="tambahUserForm" action="{{ route('admin.users.store') }}" method="POST">
+        <form id="tambahUserForm" action="{{ route('admin.pengguna.store') }}" method="POST">
             @csrf
             <div class="form-group">
                 <label for="full_name">Nama Lengkap</label>
