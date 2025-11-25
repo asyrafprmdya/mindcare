@@ -192,6 +192,59 @@ class AuthController extends Controller
             ], 500);
         }
     }
+    public function pasien() {
+        $user = Auth::user();
+
+        // Data Dummy Pasien (Nanti bisa diganti query database)
+        $patients = [
+            [
+                'id' => 1,
+                'name' => 'Budi Santoso',
+                'age' => 28,
+                'gender' => 'Pria',
+                'diagnosis' => 'Anxiety Disorder',
+                'last_session' => '25 Nov 2025',
+                'status' => 'Active',
+                'initials' => 'BS',
+                'color' => '#3b82f6' // Biru
+            ],
+            [
+                'id' => 2,
+                'name' => 'Siti Aminah',
+                'age' => 24,
+                'gender' => 'Wanita',
+                'diagnosis' => 'Mild Depression',
+                'last_session' => '22 Nov 2025',
+                'status' => 'Active',
+                'initials' => 'SA',
+                'color' => '#ec4899' // Pink
+            ],
+            [
+                'id' => 3,
+                'name' => 'Rudi Hartono',
+                'age' => 35,
+                'gender' => 'Pria',
+                'diagnosis' => 'Stress Management',
+                'last_session' => '20 Nov 2025',
+                'status' => 'Inactive',
+                'initials' => 'RH',
+                'color' => '#f59e0b' // Orange
+            ],
+            [
+                'id' => 4,
+                'name' => 'Dewi Persik',
+                'age' => 29,
+                'gender' => 'Wanita',
+                'diagnosis' => 'Trauma Healing',
+                'last_session' => '18 Nov 2025',
+                'status' => 'Active',
+                'initials' => 'DP',
+                'color' => '#8b5cf6' // Ungu
+            ],
+        ];
+
+        return view('pasien', compact('user', 'patients'));
+    }
 
     // =========================================
     // 5. LOGOUT

@@ -20,6 +20,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chat/send', [AuthController::class, 'sendMessage'])->name('chat.send');
 });
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [AuthController::class, 'dashboard']);
+    
+    // --- TAMBAHKAN ROUTE INI ---
+    Route::get('/pasien', [AuthController::class, 'pasien'])->name('pasien.index');
+    
+    Route::get('/chat', [AuthController::class, 'chat'])->name('chat.index');
+    Route::post('/chat/send', [AuthController::class, 'sendMessage'])->name('chat.send');
+    Route::get('/laporan', [AuthController::class, 'laporan']);
+    Route::get('/logout', [AuthController::class, 'logout']);
+});
+
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     // Admin Public Routes
