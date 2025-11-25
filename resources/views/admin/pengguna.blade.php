@@ -1,156 +1,237 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manajemen Pengguna - MindCare</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="{{ asset('style.css') }}">
-  <style>
-     /* Tambahkan style tambahan khusus tabel/modal di sini jika perlu, atau gabung ke style.css */
-     .modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; }
-     .modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 500px; }
-     .action-buttons { display: flex; gap: 5px; }
-  </style>
-</head>
-<body>
-  <div class="dashboard-container">
-    <aside class="sidebar">
-      <div class="logo">
-          <div class="logo-icon"><i class="fas fa-brain"></i></div>
-          <div class="logo-text"><span class="logo-title">MindCare</span><span class="logo-subtitle">Admin Panel</span></div>
-      </div>
-      <nav>
-        <ul class="nav-menu">
-            <li class="nav-section">
-                <div class="nav-section-title">Manajemen Admin</div>
-                <ul>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                            <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.pasien') }}" class="nav-link {{ request()->routeIs('admin.pasien') ? 'active' : '' }}">
-                            <i class="fas fa-users"></i><span>Manajemen Pasien</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.pengguna') }}" class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}">
-                            <i class="fas fa-users-cog"></i><span>Manajemen Pengguna</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.sistem') }}" class="nav-link {{ request()->routeIs('admin.sistem') ? 'active' : '' }}">
-                            <i class="fas fa-cogs"></i><span>Manajemen Sistem</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li class="nav-section">
-                <ul>
-                    <li class="nav-item"><a href="{{ route('logout') }}" class="nav-link" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
-                </ul>
-            </li>
-        </ul>
-      </nav>
-    </aside>
+@extends('layouts.admin')
 
-    <main class="main-content">
-      <header class="header fade-in">
-        <div class="header-top">
-            <div class="welcome-text">
-                <h1>Manajemen Pengguna</h1>
-                <p>Kelola semua pengguna yang terdaftar.</p>
-            </div>
-            <div class="header-actions">
-                <button onclick="openModal()" class="btn btn-primary"><i class="fas fa-user-plus"></i> Tambah User</button>
+@section('title', 'Manajemen Pengguna')
+@section('header-title', 'Manajemen Pengguna')
+@section('header-subtitle', 'Kelola semua pengguna yang terdaftar di sistem.')
+
+@section('header-actions')
+    <button onclick="openModal()" class="btn btn-primary" style="background: #8b5cf6; border-radius: 8px; padding: 12px 24px; font-weight: 600;">
+        <i class="fa-solid fa-plus" style="margin-right: 8px;"></i> Tambah Pengguna Baru
+    </button>
+@endsection
+
+@section('content')
+    <style>
+        /* --- Style Khusus Sesuai Gambar --- */
+        
+        /* Search Bar di Header Card */
+        .search-wrapper {
+            position: relative;
+            width: 300px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 40px; 
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            color: #64748b;
+        }
+        .search-input:focus { border-color: #8b5cf6; }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        /* Table Styling Update (RATA KIRI) */
+        .custom-table th {
+            font-size: 11px;
+            color: #94a3b8;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: #ffffff; 
+            border-bottom: 1px solid #f1f5f9;
+            padding: 20px 24px;
+            text-align: left; /* Header rata kiri */
+        }
+        .custom-table td {
+            padding: 16px 24px;
+            color: #334155;
+            font-size: 14px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: left; /* Isi data rata kiri */
+        }
+
+        /* Badges */
+        .badge { padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-block; }
+        
+        /* Role Colors */
+        .badge-patient { background: #dbeafe; color: #1e40af; } 
+        .badge-admin { background: #f3e8ff; color: #7e22ce; }   
+        .badge-counselor { background: #ffedd5; color: #c2410c; } 
+
+        /* Status Colors */
+        .badge-active { background: #dcfce7; color: #166534; } 
+        .badge-inactive { background: #fee2e2; color: #991b1b; } 
+
+        /* Action Buttons */
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-right: 6px;
+        }
+        .btn-edit { background: #f3e8ff; color: #7c3aed; }
+        .btn-edit:hover { background: #ede9fe; }
+        .btn-delete { background: #fee2e2; color: #ef4444; }
+        .btn-delete:hover { background: #fecaca; }
+
+        /* Modal Styling */
+        .modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #334155; }
+        .form-control { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+    </style>
+
+    <div class="card fade-in" style="border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);">
+        
+        <div class="card-header" style="padding: 24px 30px; background: white; border-bottom: 1px solid #f1f5f9;">
+            <h3 class="chart-title" style="font-size: 16px; font-weight: 700; color: #0f172a;">
+                Daftar Semua Pengguna ({{ $users->count() }})
+            </h3>
+            
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Cari pengguna berdasarkan..." class="search-input">
             </div>
         </div>
-      </header>
 
-      <div class="content-wrapper">
-        <div class="card fade-in">
-            <div class="card-header">
-                <h3 class="chart-title">Daftar Pengguna ({{ $users->count() }})</h3>
-            </div>
-            <div class="card-body report-table-container">
-                <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Nama Lengkap</th>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($users as $u)
-                    <tr>
-                        <td>{{ $u->full_name }}</td>
-                        <td>{{ $u->username }}</td>
-                        <td>{{ $u->email }}</td>
-                        <td><span class="status-badge" style="background:#f3f4f6;">{{ ucfirst($u->role) }}</span></td>
-                        <td><span class="status-badge {{ $u->is_active ? 'status-aktif' : 'status-nonaktif' }}">{{ $u->is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
-                        <td>
-                            <div class="action-buttons">
-                                <form action="{{ route('admin.pengguna.destroy', $u->id) }}" method="POST" onsubmit="return confirm('Hapus user ini?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="6" class="empty-state">Tidak ada data.</td></tr>
-                    @endforelse
-                </tbody>
+        <div class="card-body" style="padding: 0;">
+            <div style="overflow-x: auto;">
+                <table class="custom-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">NO</th>
+                            <th>NAMA LENGKAP</th>
+                            <th>USERNAME</th>
+                            <th>EMAIL</th>
+                            <th>ROLE</th>
+                            <th>STATUS</th>
+                            <th>TGL. DIBUAT</th>
+                            <th>AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        @forelse($users as $u)
+                        <tr>
+                            <td style="font-weight: 600;">{{ $loop->iteration }}</td>
+                            
+                            <td style="font-weight: 500; color: #1e293b;">{{ $u->full_name }}</td>
+                            <td>{{ $u->username }}</td>
+                            <td style="color: #64748b;">{{ $u->email }}</td>
+                            <td>
+                                <span class="badge badge-{{ $u->role }}">
+                                    {{ ucfirst($u->role) }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {{ $u->is_active ? 'badge-active' : 'badge-inactive' }}">
+                                    {{ $u->is_active ? 'Aktif' : 'Nonaktif' }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ \Carbon\Carbon::parse($u->created_at)->translatedFormat('d M Y') }}
+                            </td>
+                            <td>
+                                <div style="display: flex;">
+                                    <button class="btn-action btn-edit" title="Edit">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <form action="{{ route('admin.pengguna.destroy', $u->id) }}" method="POST" onsubmit="return confirm('Hapus user ini?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn-action btn-delete" title="Hapus">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 40px; color: #94a3b8;">
+                                Tidak ada data pengguna.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
                 </table>
             </div>
         </div>
-      </div>
-    </main>
-  </div>
-
-  <div id="userModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>Tambah User Baru</h3>
-        <form action="{{ route('admin.pengguna.store') }}" method="POST">
-            @csrf
-            <div class="form-group"><label>Nama Lengkap</label><input type="text" name="full_name" required></div>
-            <div class="form-group"><label>Username</label><input type="text" name="username" required></div>
-            <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
-            <div class="form-group"><label>Password</label><input type="password" name="password" required></div>
-            <div class="form-group">
-                <label>Role</label>
-                <select name="role" required>
-                    <option value="patient">Patient</option>
-                    <option value="counselor">Counselor</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
-            <div class="modal-footer">
-                <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
-                <button type="submit" class="btn btn-primary">Simpan</button>
-            </div>
-        </form>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-      function openModal() { document.getElementById('userModal').style.display = 'flex'; }
-      function closeModal() { document.getElementById('userModal').style.display = 'none'; }
-      
-      @if(session('success'))
-        Swal.fire('Sukses', '{{ session('success') }}', 'success');
-      @endif
-      @if($errors->any())
-        Swal.fire('Error', '{{ $errors->first() }}', 'error');
-      @endif
-  </script>
-</body>
-</html>
+    <div id="userModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 style="font-size: 18px; font-weight: 700; margin: 0;">Tambah Pengguna Baru</h3>
+                <button onclick="closeModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8;">&times;</button>
+            </div>
+            
+            <form action="{{ route('admin.pengguna.store') }}" method="POST">
+                @csrf
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" name="full_name" class="form-control" placeholder="Contoh: Irham Delta" required>
+                </div>
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label>Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="irham123" required>
+                    </div>
+                    <div>
+                        <label>Role</label>
+                        <select name="role" class="form-control" required>
+                            <option value="patient">Patient</option>
+                            <option value="admin">Admin</option>
+                            <option value="counselor">Counselor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="email@contoh.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Minimal 6 karakter" required>
+                </div>
+                
+                <div style="text-align: right; margin-top: 24px;">
+                    <button type="button" onclick="closeModal()" class="btn" style="background: #f1f5f9; color: #475569; margin-right: 10px;">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="background: #8b5cf6; color: white;">Simpan Pengguna</button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+<script>
+    // Modal Functions
+    function openModal() { document.getElementById('userModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('userModal').style.display = 'none'; }
+
+    // Simple Client-side Search
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll('#userTableBody tr');
+
+        rows.forEach(row => {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    });
+</script>
+@endpush

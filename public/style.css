@@ -13,7 +13,6 @@ body {
     min-height: 100vh;
     display: flex;
     position: relative;
-    overflow: hidden;
     color: #0f172a;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -375,7 +374,6 @@ body {
     justify-content: center;
     padding: 80px;
     position: relative;
-    overflow: hidden;
     background-size: 200% 200%;
     animation: gradient 15s ease infinite;
 }
@@ -654,7 +652,6 @@ body.page-register .decoration-section::after {
     background: #e2e8f0;
     border-radius: 6px;
     margin-top: 8px;
-    overflow: hidden;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -912,7 +909,6 @@ body.page-register .decoration-section::after {
     border: 2px solid #f1f5f9;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
     animation: fadeInUp 0.6s ease-out backwards;
 }
 
@@ -1020,7 +1016,6 @@ body.page-register .decoration-section::after {
     background: white;
     border-radius: 16px;
     border: 2px solid #f1f5f9;
-    overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
     transition: all 0.3s ease;
 }
@@ -1667,7 +1662,6 @@ body {
     background: white;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
-    overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;

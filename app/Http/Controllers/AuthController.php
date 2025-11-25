@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB; // Pastikan DB diimport
 use Carbon\Carbon;
 
 class AuthController extends Controller
@@ -31,12 +32,9 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            
-            // Jika admin login lewat form biasa, arahkan ke dashboard admin
             if (Auth::user()->role === 'admin') {
                 return redirect()->route('admin.dashboard');
             }
-            
             return redirect()->intended('/dashboard');
         }
 
@@ -56,100 +54,65 @@ class AuthController extends Controller
             'confirm'   => 'required|same:password'
         ]);
 
-        User::create([
+        $user = User::create([
             'full_name' => $request->full_name,
             'username'  => $request->username,
             'email'     => $request->email,
             'password'  => Hash::make($request->password),
-            'role'      => 'patient', // Default role
+            'role'      => 'patient',
             'is_active' => 1
+        ]);
+
+        // Buat data dummy pasien agar tidak error saat buka profil
+        DB::table('patients')->insert([
+            'user_id' => $user->id,
+            'date_of_birth' => null,
+            'address' => '-'
         ]);
 
         return redirect('/')->with('register_success', 'Akun berhasil dibuat! Silakan login.');
     }
 
     // =========================================
-    // 2. DASHBOARD USER (DOKTER/KONSELOR)
+    // 2. DASHBOARD & PROFIL (USER)
     // =========================================
 
     public function dashboard() {
         $user = Auth::user();
+        if ($user->role === 'admin') return redirect()->route('admin.dashboard');
 
-        // Jika admin nyasar ke sini, lempar ke admin dashboard
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-
-        // Data Statistik Dummy
+        // Hitung statistik real dari database
+        $totalSessions = DB::table('counseling_sessions')->where('user_id', $user->id)->count();
+        
         $stats = [
-            'total_patients'   => 120,
-            'today_sessions'   => 8,
-            'pending_sessions' => 3,
+            'total_patients'   => 120, // Dummy
+            'today_sessions'   => $totalSessions, // Real count
+            'pending_sessions' => 0,
             'satisfaction_rate'=> 98
         ];
 
-        // Data Aktivitas Dummy
         $recentActivities = [
-            [
-                'action'     => 'Login Berhasil',
-                'user_name'  => $user->full_name,
-                'created_at' => Carbon::now()
-            ],
-            [
-                'action'     => 'Update Profil',
-                'user_name'  => 'Admin',
-                'created_at' => Carbon::now()->subHours(2)
-            ]
+            ['action' => 'Login Berhasil', 'user_name' => $user->full_name, 'created_at' => Carbon::now()],
         ];
 
-        // Data Jadwal Dummy
-        $todayAppointments = [
-            [
-                'patient_name' => 'Budi Santoso',
-                'start_time'   => Carbon::now()->setHour(9)->setMinute(0),
-                'status'       => 'scheduled'
-            ],
-            [
-                'patient_name' => 'Siti Aminah',
-                'start_time'   => Carbon::now()->setHour(13)->setMinute(30),
-                'status'       => 'pending'
-            ]
-        ];
+        $todayAppointments = [];
 
         return view('dashboard', compact('user', 'stats', 'recentActivities', 'todayAppointments'));
     }
 
-    // =========================================
-    // 3. HALAMAN PROFIL PASIEN (VIEW ONLY)
-    // =========================================
-
     public function pasien() {
+        $userId = Auth::id();
+        $patient = DB::table('users')
+            ->leftJoin('patients', 'users.id', '=', 'patients.user_id')
+            ->where('users.id', $userId)
+            ->select('users.*', 'patients.date_of_birth', 'patients.address')
+            ->first();
         $user = Auth::user();
-
-        // Data Dummy Pasien untuk Tampilan User
-        $patients = [
-            [
-                'id' => 1, 'name' => 'Budi Santoso', 'age' => 28, 'gender' => 'Pria',
-                'diagnosis' => 'Anxiety Disorder', 'last_session' => '25 Nov 2025',
-                'status' => 'Active', 'initials' => 'BS', 'color' => '#3b82f6'
-            ],
-            [
-                'id' => 2, 'name' => 'Siti Aminah', 'age' => 24, 'gender' => 'Wanita',
-                'diagnosis' => 'Mild Depression', 'last_session' => '22 Nov 2025',
-                'status' => 'Active', 'initials' => 'SA', 'color' => '#ec4899'
-            ],
-            [
-                'id' => 3, 'name' => 'Rudi Hartono', 'age' => 35, 'gender' => 'Pria',
-                'diagnosis' => 'Stress Management', 'last_session' => '20 Nov 2025',
-                'status' => 'Inactive', 'initials' => 'RH', 'color' => '#f59e0b'
-            ]
-        ];
-
-        return view('pasien', compact('user', 'patients'));
+        return view('pasien', compact('user', 'patient'));
     }
 
     // =========================================
-    // 4. FITUR CHAT & LAPORAN
+    // 3. FITUR CHAT & SIMPAN KE LAPORAN
     // =========================================
 
     public function chat() {
@@ -161,13 +124,16 @@ class AuthController extends Controller
         return view('chat', compact('user', 'sessionId'));
     }
 
+    // --- PERBAIKAN UTAMA ADA DI SINI ---
     public function sendMessage(Request $request) {
         $request->validate(['message' => 'required|string']);
+        $user = Auth::user();
         
         $n8n_webhook_url = "https://portative-practicable-lovie.ngrok-free.dev/webhook/c1f8d15b-e096-47f8-922e-a7484ebbc25c/chat";
         $sessionId = $request->session_id ?? Session::get('chat_session_id');
 
         try {
+            // 1. Kirim ke AI (N8N)
             $response = Http::post($n8n_webhook_url, [
                 'chatInput' => $request->message,
                 'sessionId' => $sessionId,
@@ -175,31 +141,93 @@ class AuthController extends Controller
             ]);
 
             if ($response->successful()) {
-                $data = $response->json();
+                $aiReply = $response->json()['output'] ?? 'Tidak ada balasan.';
+
+                // 2. SIMPAN KE DATABASE (Agar masuk ke Laporan)
+                // Insert ke tabel counseling_sessions
+                $sessionIdDb = DB::table('counseling_sessions')->insertGetId([
+                    'user_id' => $user->id,
+                    'date' => now(),
+                    'duration' => 5, // Estimasi durasi chat (menit)
+                    'status' => 'completed',
+                    'created_at' => now()
+                ]);
+
+                // Insert ke tabel medical_records (Hasil Chat)
+                DB::table('medical_records')->insert([
+                    'session_id' => $sessionIdDb,
+                    'diagnosis' => 'Konsultasi AI',
+                    'notes' => 'User: ' . $request->message, // Simpan pertanyaan user
+                    'prescription' => $aiReply, // Simpan jawaban AI sebagai saran
+                    'created_at' => now()
+                ]);
+
                 return response()->json([
                     'success' => true,
-                    'response' => $data['output'] ?? 'Tidak ada balasan.',
+                    'response' => $aiReply,
                     'session_id' => $sessionId
                 ]);
             } else {
                 return response()->json(['error' => 'Gagal menghubungi AI'], 500);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Server Error'], 500);
+            return response()->json(['error' => 'Server Error: ' . $e->getMessage()], 500);
         }
     }
 
-    public function laporan() {
-        // Halaman Laporan Dummy
-        $user = Auth::user();
-        $reportStats = ['pendapatan' => 'Rp 12.5M', 'kenaikan_pasien' => '+15%', 'sesi_selesai' => 45];
-        $logs = [];
-        return view('laporan', compact('user', 'reportStats', 'logs'));
-    }
+    // =========================================
+    // 4. LAPORAN (MENGAMBIL DARI DATABASE)
+    // =========================================
 
-    // =========================================
-    // 5. LOGOUT
-    // =========================================
+    public function laporan() {
+        $user = Auth::user();
+        
+        // Ambil data dari tabel counseling_sessions & medical_records
+        $reports = DB::table('counseling_sessions')
+            ->leftJoin('medical_records', 'counseling_sessions.id', '=', 'medical_records.session_id')
+            ->where('counseling_sessions.user_id', $user->id)
+            ->select(
+                'counseling_sessions.id', 
+                'counseling_sessions.date', 
+                'counseling_sessions.duration', 
+                'counseling_sessions.status',
+                'medical_records.diagnosis',
+                'medical_records.notes',
+                'medical_records.prescription'
+            )
+            ->orderBy('counseling_sessions.date', 'desc')
+            ->get();
+
+        $stats = [
+            'total_sessions' => $reports->count(),
+            'completed' => $reports->where('status', 'completed')->count(),
+            'avg_duration' => $reports->avg('duration') ? round($reports->avg('duration')) : 0,
+            'last_visit' => $reports->first() ? Carbon::parse($reports->first()->date)->translatedFormat('d M Y') : '-'
+        ];
+
+        return view('laporan', compact('user', 'reports', 'stats'));
+    }
+    public function jadwal() {
+        $user = Auth::user();
+
+        // Ambil data jadwal sesi dari tabel counseling_sessions
+        // Kita akan mengambil sesi yang statusnya 'scheduled' (akan datang) dan 'completed' (selesai)
+        $schedules = DB::table('counseling_sessions')
+            ->where('user_id', $user->id)
+            ->orderBy('date', 'desc') // Urutkan dari yang terbaru
+            ->get();
+
+        // Kelompokkan jadwal menjadi "Akan Datang" dan "Riwayat Sesi"
+        $upcomingSchedules = $schedules->filter(function ($item) {
+            return $item->status === 'scheduled' && \Carbon\Carbon::parse($item->date)->isFuture();
+        });
+
+        $pastSchedules = $schedules->filter(function ($item) {
+            return $item->status === 'completed' || $item->status === 'cancelled' || \Carbon\Carbon::parse($item->date)->isPast();
+        });
+
+        return view('jadwal', compact('user', 'upcomingSchedules', 'pastSchedules'));
+    }
 
     public function logout(Request $request) {
         Auth::logout();

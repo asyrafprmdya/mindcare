@@ -27,6 +27,10 @@ Route::middleware(['auth'])->group(function () {
     
     // PERBAIKAN DI SINI: Menambahkan ->name('logout')
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::get('/pasien/{id}', [AuthController::class, 'showPasien'])->name('pasien.detail');
+    
+    Route::get('/jadwal', [AuthController::class, 'jadwal'])->name('jadwal.index');
 });
 
 // === 3. ADMIN ROUTES (Khusus Administrator) ===
