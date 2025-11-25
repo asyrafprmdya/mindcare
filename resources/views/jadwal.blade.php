@@ -161,7 +161,7 @@
                         </div>
                         <div class="schedule-details">
                             <h4>Sesi Konseling AI</h4>
-                            <p><i class="far fa-clock"></i> {{ \Carbon\Carbon::parse($s->date)->format('H:i') }} WIB</p>
+                            <p><i class="far fa-clock"></i> {{ \Carbon\Carbon::parse($s->date)->format('H:i') }} WITA</p>
                         </div>
                     </div>
                     <div>
