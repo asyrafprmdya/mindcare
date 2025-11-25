@@ -9,21 +9,7 @@ class Patient extends Model
 {
     use HasFactory;
     
-    protected $fillable = [
-        'user_id', 
-        'phone', 
-        'date_of_birth', 
-        'gender', 
-        'address', 
-        'medical_history', 
-        'emergency_contact'
-    ];
-    
-    public $timestamps = false;
-
-    // Relasi ke User
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    // Pastikan nama tabel benar, default Laravel: 'patients'
+    protected $fillable = ['user_id', 'date_of_birth', 'address'];
+    public $timestamps = false; // Jika tabel patients tidak punya created_at/updated_at
 }
