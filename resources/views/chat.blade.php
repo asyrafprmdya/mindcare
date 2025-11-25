@@ -10,7 +10,20 @@
     <link rel="stylesheet" href="{{ asset('style.css') }}">
 
     <style>
-        /* === CSS KHUSUS CHAT === */
+        /* === PERBAIKAN LAYOUT FULL WIDTH === */
+        
+        /* 1. Override Content Wrapper agar Full Width */
+        .content-wrapper {
+            max-width: 100% !important; /* Mematikan batasan lebar */
+            width: 100% !important;
+            padding: 20px !important; /* Padding lebih kecil agar chat luas */
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 90px); /* Tinggi layar dikurangi header */
+            overflow: hidden; /* Mencegah scroll di wrapper */
+        }
+
+        /* 2. Chat Card memenuhi ruang */
         .chat-card {
             background: white; 
             border-radius: 12px;
@@ -19,24 +32,30 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             display: flex; 
             flex-direction: column; 
-            height: calc(100vh - 140px); 
+            width: 100%; /* Lebar Penuh */
+            flex: 1; /* Mengisi sisa tinggi yang ada */
+            height: 100%; /* Memastikan tinggi penuh */
         }
+
+        /* === CSS KOMPONEN CHAT === */
         .chat-header-box { 
             background: #ffffff;
             color: #0f172a; 
-            padding: 20px 24px; 
+            padding: 15px 24px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
             border-bottom: 1px solid #f1f5f9;
+            flex-shrink: 0; /* Header tidak boleh mengecil */
         }
         .chat-header-box h2 { 
-            font-size: 1.2rem; 
+            font-size: 1.1rem; 
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 10px;
             color: #8b5cf6;
+            margin: 0;
         }
         .status-indicator {
             width: 8px; height: 8px; background: #4caf50; border-radius: 50%;
@@ -51,7 +70,7 @@
             padding: 8px 15px; 
             border-radius: 20px; 
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             transition: all 0.3s;
             display: flex;
@@ -61,8 +80,8 @@
         .new-chat-btn:hover { background: #ede9fe; transform: translateY(-2px); }
 
         .chat-box { 
-            flex: 1; 
-            overflow-y: auto; 
+            flex: 1; /* Mengisi ruang tengah */
+            overflow-y: auto; /* Scroll hanya di area pesan */
             padding: 20px; 
             background: #f8fafc;
             display: flex; 
@@ -77,6 +96,7 @@
             word-wrap: break-word;
             animation: fadeIn 0.3s ease-in;
             white-space: pre-wrap;
+            font-size: 14px;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -91,7 +111,8 @@
         }
 
         .chat-form { 
-            display: flex; padding: 20px; background: white; border-top: 1px solid #f1f5f9; gap: 10px; 
+            display: flex; padding: 15px 20px; background: white; border-top: 1px solid #f1f5f9; gap: 10px; 
+            flex-shrink: 0; /* Input tidak boleh mengecil */
         }
         .chat-form input { 
             flex: 1; padding: 12px 20px; border: 1.5px solid #e2e8f0; border-radius: 25px; outline: none; font-family: 'Inter', sans-serif;
@@ -99,7 +120,7 @@
         .chat-form input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px #f5f3ff; }
         .chat-form button { 
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;
+            color: white; border: none; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;
         }
         .chat-form button:hover { transform: scale(1.05); }
         
@@ -109,20 +130,23 @@
         }
         .typing-dots { display: flex; margin-left: 10px; gap: 4px; }
         .typing-dots span { 
-            width: 8px; height: 8px; background: #8b5cf6; border-radius: 50%; animation: blink 1.4s infinite both; 
+            width: 6px; height: 6px; background: #8b5cf6; border-radius: 50%; animation: blink 1.4s infinite both; 
         }
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes blink { 0%, 100% { opacity: .2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
 
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .chat-card { height: calc(100vh - 100px); }
-            .content-wrapper { padding: 15px; }
+            .content-wrapper { padding: 10px !important; height: calc(100vh - 70px); }
+            .chat-card { border-radius: 0; border: none; }
+            .message { max-width: 85%; }
         }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
+        
         <aside class="sidebar">
             <div class="logo">
                 <div class="logo-icon">
@@ -140,25 +164,25 @@
                         <div class="nav-section-title">Menu Utama</div>
                         <ul>
                             <li class="nav-item">
-                                <a href="{{ url('/dashboard') }}" class="nav-link {{ Request::is('dashboard') ? 'active' : '' }}">
+                                <a href="{{ url('/dashboard') }}" class="nav-link">
                                     <i class="fas fa-home"></i>
                                     <span>Dashboard</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link">
+                                <a href="{{ url('/pasien') }}" class="nav-link">
                                     <i class="fas fa-users"></i>
                                     <span>Profil Pasien</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link">
+                                <a href="{{ url('/jadwal') }}" class="nav-link">
                                     <i class="fas fa-calendar-alt"></i>
                                     <span>Jadwal Konseling</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url('/chat') }}" class="nav-link {{ Request::is('chat') ? 'active' : '' }}">
+                                <a href="{{ route('chat.index') }}" class="nav-link active">
                                     <i class="fas fa-comments"></i>
                                     <span>Chat Dokter AI</span>
                                 </a>
@@ -170,7 +194,7 @@
                         <div class="nav-section-title">Laporan</div>
                         <ul>
                              <li class="nav-item">
-                                <a href="{{ url('/laporan') }}" class="nav-link {{ Request::is('laporan') ? 'active' : '' }}">
+                                <a href="{{ url('/laporan') }}" class="nav-link">
                                     <i class="fas fa-chart-bar"></i>
                                     <span>Laporan</span>
                                 </a>
@@ -223,8 +247,7 @@
                     </div>
 
                     <div class="chat-box" id="chat-box">
-                        <div class="message bot">
-👋 Halo, <b>{{ Auth::user()->full_name }}</b>! Saya dokter virtual MindCare. <br>Ada yang bisa saya bantu terkait kesehatan Anda hari ini? 😊
+                        <div class="message bot">👋 Halo, <b>{{ Auth::user()->full_name }}</b>! Saya dokter virtual MindCare. <br>Ada yang bisa saya bantu terkait kesehatan Anda hari ini? 😊
                         </div>
                     </div>
 

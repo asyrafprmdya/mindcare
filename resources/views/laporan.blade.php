@@ -9,10 +9,45 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('style.css') }}">
     <style>
-        /* Style Khusus Laporan */
+        /* --- PERBAIKAN LAYOUT FULL WIDTH (Sama seperti Jadwal & Dashboard) --- */
+        
+        /* 1. Main Content mengisi sisa ruang */
+        .main-content {
+            flex: 1;
+            margin-left: 260px; /* Memberi ruang untuk sidebar */
+            background: #f8fafc;
+            min-height: 100vh;
+            width: calc(100% - 260px); /* Memaksa lebar penuh */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 2. Header Full Width */
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 40px;
+            width: 100%; 
+            box-sizing: border-box;
+            max-width: none !important; /* Override style global */
+        }
+
+        /* 3. Content Wrapper Full Width */
+        .content-wrapper {
+            padding: 0 40px 40px 40px;
+            width: 100%; 
+            box-sizing: border-box;
+            flex: 1;
+            max-width: none !important; /* Override style global */
+            margin: 0 !important;
+        }
+
+        /* --- STYLE KHUSUS LAPORAN --- */
         .report-card {
             background: white; border: 1px solid #e2e8f0; border-radius: 12px; 
             padding: 24px; margin-bottom: 20px; transition: 0.2s;
+            width: 100%; /* Kartu melebar penuh */
         }
         .report-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
@@ -43,12 +78,23 @@
         .diagnosis-title { color: #1e40af; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
         
         /* Stats Grid Kecil */
-        .mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
-        .mini-card { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
+        .mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; width: 100%; }
+        .mini-card { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; width: 100%; }
         .mini-value { font-size: 20px; font-weight: 700; color: #1e293b; }
         .mini-label { font-size: 12px; color: #64748b; margin-top: 4px; }
 
+        .empty-state { 
+            padding: 60px; 
+            text-align: center; 
+            background: white; 
+            border-radius: 12px; 
+            border: 1px dashed #cbd5e1; /* Ubah jadi dashed biar kelihatan area kosongnya */
+            width: 100%; /* Pastikan lebar penuh */
+        }
+
         @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { width: 100%; margin-left: 0; }
             .report-body { grid-template-columns: 1fr; }
             .mini-stats { grid-template-columns: 1fr 1fr; }
         }
@@ -168,7 +214,7 @@
                     </div>
                 </div>
                 @empty
-                <div class="empty-state" style="padding: 60px; text-align: center; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div class="empty-state">
                     <i class="fas fa-file-medical-alt" style="font-size: 48px; color: #cbd5e1; margin-bottom: 16px;"></i>
                     <p style="color: #64748b; font-size: 15px;">Belum ada riwayat konsultasi yang tercatat.</p>
                 </div>

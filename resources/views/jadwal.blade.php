@@ -9,11 +9,12 @@
     <link rel="stylesheet" href="{{ asset('style.css') }}">
 
     <style>
-        /* --- Layout & Sidebar (Konsisten) --- */
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .dashboard-container { display: flex; min-height: 100vh; }
+        /* --- Layout & Sidebar (SAMA PERSIS DENGAN DASHBOARD) --- */
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .dashboard-container { display: flex; min-height: 100vh; width: 100%; }
         
-        .sidebar { width: 260px; background: white; border-right: 1px solid #f1f5f9; padding: 24px 0; position: fixed; height: 100vh; z-index: 10; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #f1f5f9; padding: 24px 0; position: fixed; height: 100vh; z-index: 10; top: 0; left: 0; }
+        
         .logo { padding: 0 24px 30px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f1f5f9; margin-bottom: 20px; }
         .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; }
         .logo-text { display: flex; flex-direction: column; }
@@ -28,12 +29,21 @@
         .nav-link.active { background-color: #f5f3ff; color: #8b5cf6; font-weight: 600; }
         .nav-link i { width: 20px; text-align: center; font-size: 18px; }
 
-        .main-content { flex: 1; margin-left: 260px; background: #f8fafc; padding: 30px 40px; min-height: 100vh; }
+        /* --- Main Content (Full Width) --- */
+        .main-content { 
+            flex: 1; 
+            margin-left: 260px; 
+            background: #f8fafc; 
+            min-height: 100vh; 
+            width: calc(100% - 260px); 
+            display: flex;
+            flex-direction: column;
+        }
 
-        /* --- STYLE KHUSUS JADWAL --- */
-        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        /* --- Styles Khusus Halaman Jadwal --- */
+        .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; width: 100%; }
         .page-title { font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; }
-        .page-subtitle { color: #64748b; font-size: 14px; }
+        .page-subtitle { color: #64748b; font-size: 14px; margin: 0; }
 
         .section-title { font-size: 16px; font-weight: 700; color: #334155; margin-bottom: 16px; margin-top: 30px; }
         .section-title:first-child { margin-top: 0; }
@@ -42,7 +52,7 @@
         .schedule-card {
             background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 16px; transition: 0.2s;
+            margin-bottom: 16px; transition: 0.2s; width: 100%;
         }
         .schedule-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #cbd5e1; }
 
@@ -51,7 +61,7 @@
         .date-box {
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
             width: 60px; height: 60px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center;
+            align-items: center; justify-content: center; text-align: center; flex-shrink: 0;
         }
         .date-day { font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1; }
         .date-month { font-size: 11px; color: #64748b; text-transform: uppercase; margin-top: 2px; font-weight: 600; }
@@ -66,15 +76,26 @@
 
         .btn-action { 
             padding: 8px 16px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; 
-            color: #0f172a; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+            color: #0f172a; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block;
         }
         .btn-action:hover { background: #f8fafc; border-color: #cbd5e1; }
 
-        .empty-state { padding: 40px; text-align: center; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b; }
+        .empty-state { padding: 40px; text-align: center; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b; width: 100%; }
 
-        /* Fade In Animation */
+        /* Wrapper Konten & Header agar Rata */
+        .header-top { padding: 30px 40px; width: 100%; box-sizing: border-box; }
+        .content-wrapper { padding: 0 40px 40px 40px; width: 100%; box-sizing: border-box; flex: 1; }
+
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; width: 100%; }
+            .schedule-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .schedule-info { width: 100%; }
+            .btn-action { width: 100%; text-align: center; margin-left: 0 !important; margin-top: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -82,8 +103,13 @@
         
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);"><i class="fas fa-brain"></i></div>
-                <div class="logo-text"><span class="logo-title" style="color: #8b5cf6;">MindCare</span><span class="logo-subtitle">PROFESSIONAL</span></div>
+                <div class="logo-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-title" style="color: #8b5cf6;">MindCare</span>
+                    <span class="logo-subtitle">PROFESSIONAL</span>
+                </div>
             </div>
             
             <nav>
@@ -91,33 +117,71 @@
                     <li class="nav-section">
                         <div class="nav-section-title">MENU UTAMA</div>
                         <ul>
-                            <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
-                            <li class="nav-item"><a href="{{ route('pasien.index') }}" class="nav-link"><i class="fas fa-users"></i><span>Profil Pasien</span></a></li>
-                            <li class="nav-item"><a href="{{ route('jadwal.index') }}" class="nav-link active" style="background: #f5f3ff; color: #8b5cf6; font-weight: 600;"><i class="fas fa-calendar-alt"></i><span>Jadwal Konseling</span></a></li>
-                            <li class="nav-item"><a href="{{ route('chat.index') }}" class="nav-link"><i class="fas fa-comments"></i><span>Chat Dokter AI</span></a></li>
+                            <li class="nav-item">
+                                <a href="{{ route('dashboard') }}" class="nav-link">
+                                    <i class="fas fa-home"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('pasien.index') }}" class="nav-link">
+                                    <i class="fas fa-users"></i>
+                                    <span>Profil Pasien</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('jadwal.index') }}" class="nav-link active" style="background: #f5f3ff; color: #8b5cf6; font-weight: 600;">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Jadwal Konseling</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('chat.index') }}" class="nav-link">
+                                    <i class="fas fa-comments"></i>
+                                    <span>Chat Dokter AI</span>
+                                </a>
+                            </li>
                         </ul>
                     </li>
+
                     <li class="nav-section">
                         <div class="nav-section-title">LAPORAN</div>
-                        <ul><li class="nav-item"><a href="{{ url('/laporan') }}" class="nav-link"><i class="fas fa-file-alt"></i><span>Laporan</span></a></li></ul>
+                        <ul>
+                             <li class="nav-item">
+                                <a href="{{ url('/laporan') }}" class="nav-link">
+                                    <i class="fas fa-file-alt"></i>
+                                    <span>Laporan</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
+
                     <li class="nav-section">
                         <div class="nav-section-title">AKUN</div>
-                        <ul><li class="nav-item"><a href="{{ url('/logout') }}" class="nav-link" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li></ul>
+                        <ul>
+                            <li class="nav-item">
+                                <a href="{{ url('/logout') }}" class="nav-link" style="color: #ef4444;">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 </ul>
             </nav>
         </aside>
 
         <main class="main-content">
-            <div class="page-header fade-in">
-                <div>
-                    <h1 class="page-title">Jadwal Konseling</h1>
-                    <p class="page-subtitle">Lihat jadwal sesi konsultasi Anda yang akan datang dan riwayat sesi.</p>
+            <div class="header-top fade-in">
+                <div class="page-header" style="width: 100%; margin-bottom: 0;">
+                    <div>
+                        <h1 class="page-title">Jadwal Konseling</h1>
+                        <p class="page-subtitle">Lihat jadwal sesi konsultasi Anda yang akan datang dan riwayat sesi.</p>
+                    </div>
+                    <button class="btn-action" style="background: #8b5cf6; color: white; border: none;">
+                        <i class="fas fa-plus"></i> Buat Jadwal Baru
+                    </button>
                 </div>
-                <button class="btn-action" style="background: #8b5cf6; color: white; border: none;">
-                    <i class="fas fa-plus"></i> Buat Jadwal Baru
-                </button>
             </div>
 
             <div class="content-wrapper fade-in">
@@ -139,7 +203,7 @@
                             </p>
                         </div>
                     </div>
-                    <div>
+                    <div style="display: flex; align-items: center;">
                         <span class="schedule-status status-scheduled">Terjadwal</span>
                         <a href="{{ route('chat.index') }}" class="btn-action" style="margin-left: 12px; border-color: #8b5cf6; color: #8b5cf6;">Masuk Sesi</a>
                     </div>
@@ -161,7 +225,7 @@
                         </div>
                         <div class="schedule-details">
                             <h4>Sesi Konseling AI</h4>
-                            <p><i class="far fa-clock"></i> {{ \Carbon\Carbon::parse($s->date)->format('H:i') }} WITA</p>
+                            <p><i class="far fa-clock"></i> {{ \Carbon\Carbon::parse($s->date)->format('H:i') }} WIB</p>
                         </div>
                     </div>
                     <div>

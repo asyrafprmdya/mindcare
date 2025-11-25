@@ -76,20 +76,24 @@ class AuthController extends Controller
     // 2. DASHBOARD & PROFIL (USER)
     // =========================================
 
+   // =========================================
+    // 2. DASHBOARD (USER)
+    // =========================================
     public function dashboard() {
         $user = Auth::user();
         if ($user->role === 'admin') return redirect()->route('admin.dashboard');
 
+        // 1. Hitung Statistik
         $totalSessions = DB::table('counseling_sessions')->where('user_id', $user->id)->count();
         
         $stats = [
-            'total_patients'   => 120,
-            'today_sessions'   => $totalSessions,
+            'total_patients'   => 120, // Dummy (bisa dihapus jika tidak relevan untuk pasien)
+            'today_sessions'   => $totalSessions, 
             'pending_sessions' => 0,
             'satisfaction_rate'=> 98
         ];
 
-        // FIX TIMEZONE: Menggunakan waktu lokal
+        // 2. Aktivitas (Tetap)
         $recentActivities = [
             [
                 'action' => 'Login Berhasil', 
@@ -98,11 +102,22 @@ class AuthController extends Controller
             ],
         ];
 
-        $todayAppointments = [];
+        // 3. RIWAYAT KONSELING (DATA BARU)
+        // Mengambil 3 sesi terakhir dari database
+        $history = DB::table('counseling_sessions')
+            ->leftJoin('medical_records', 'counseling_sessions.id', '=', 'medical_records.session_id')
+            ->where('counseling_sessions.user_id', $user->id)
+            ->select(
+                'counseling_sessions.date',
+                'counseling_sessions.status',
+                'medical_records.diagnosis' // Mengambil topik/diagnosis
+            )
+            ->orderBy('counseling_sessions.date', 'desc')
+            ->limit(3)
+            ->get();
 
-        return view('dashboard', compact('user', 'stats', 'recentActivities', 'todayAppointments'));
+        return view('dashboard', compact('user', 'stats', 'recentActivities', 'history'));
     }
-
     public function pasien() {
         $userId = Auth::id();
         $patient = DB::table('users')
