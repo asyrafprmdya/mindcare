@@ -3,18 +3,19 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\LaporanController;
 
 // Public Routes
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister']);
 Route::post('/register', [AuthController::class, 'register']);
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // User Routes (Protected by auth)
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('user.dashboard');
-    Route::get('/laporan', [AuthController::class, 'laporan']);
+    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
     Route::get('/chat', [AuthController::class, 'chat'])->name('chat.index');
     Route::post('/chat/send', [AuthController::class, 'sendMessage'])->name('chat.send');
 });
@@ -26,7 +27,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/login', [AdminController::class, 'login'])->name('login.submit');
     
     // Admin Protected Routes
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth:admin'])->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         
         // Manajemen Pasien Routes
@@ -43,5 +44,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Manajemen Sistem Routes
         Route::get('/sistem', [AdminController::class, 'sistem'])->name('sistem');
         Route::post('/sistem', [AdminController::class, 'updateSistem'])->name('sistem.update');
+        
+        // Laporan Admin
+        Route::get('/laporan', [LaporanController::class, 'adminIndex'])->name('laporan');
     });
 });
