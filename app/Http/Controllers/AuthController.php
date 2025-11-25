@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\DB; // Pastikan DB diimport
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AuthController extends Controller
 {
     // =========================================
-    // 1. AUTHENTICATION (LOGIN & REGISTER)
+    // 1. AUTHENTICATION
     // =========================================
 
     public function showLogin() {
@@ -63,7 +63,6 @@ class AuthController extends Controller
             'is_active' => 1
         ]);
 
-        // Buat data dummy pasien agar tidak error saat buka profil
         DB::table('patients')->insert([
             'user_id' => $user->id,
             'date_of_birth' => null,
@@ -81,18 +80,22 @@ class AuthController extends Controller
         $user = Auth::user();
         if ($user->role === 'admin') return redirect()->route('admin.dashboard');
 
-        // Hitung statistik real dari database
         $totalSessions = DB::table('counseling_sessions')->where('user_id', $user->id)->count();
         
         $stats = [
-            'total_patients'   => 120, // Dummy
-            'today_sessions'   => $totalSessions, // Real count
+            'total_patients'   => 120,
+            'today_sessions'   => $totalSessions,
             'pending_sessions' => 0,
             'satisfaction_rate'=> 98
         ];
 
+        // FIX TIMEZONE: Menggunakan waktu lokal
         $recentActivities = [
-            ['action' => 'Login Berhasil', 'user_name' => $user->full_name, 'created_at' => Carbon::now()],
+            [
+                'action' => 'Login Berhasil', 
+                'user_name' => $user->full_name, 
+                'created_at' => Carbon::now('Asia/Makassar')
+            ],
         ];
 
         $todayAppointments = [];
@@ -112,7 +115,32 @@ class AuthController extends Controller
     }
 
     // =========================================
-    // 3. FITUR CHAT & SIMPAN KE LAPORAN
+    // 3. JADWAL KONSELING (FIX TIMEZONE)
+    // =========================================
+    public function jadwal() {
+        $user = Auth::user();
+
+        $schedules = DB::table('counseling_sessions')
+            ->where('user_id', $user->id)
+            ->orderBy('date', 'desc')
+            ->get();
+
+        // Gunakan Carbon dengan timezone Asia/Makassar untuk perbandingan waktu
+        $now = Carbon::now('Asia/Makassar');
+
+        $upcomingSchedules = $schedules->filter(function ($item) use ($now) {
+            return $item->status === 'scheduled' && Carbon::parse($item->date)->gt($now);
+        });
+
+        $pastSchedules = $schedules->filter(function ($item) use ($now) {
+            return $item->status === 'completed' || $item->status === 'cancelled' || Carbon::parse($item->date)->lte($now);
+        });
+
+        return view('jadwal', compact('user', 'upcomingSchedules', 'pastSchedules'));
+    }
+
+    // =========================================
+    // 4. CHAT AI & LAPORAN (FIX TIMEZONE)
     // =========================================
 
     public function chat() {
@@ -124,7 +152,6 @@ class AuthController extends Controller
         return view('chat', compact('user', 'sessionId'));
     }
 
-    // --- PERBAIKAN UTAMA ADA DI SINI ---
     public function sendMessage(Request $request) {
         $request->validate(['message' => 'required|string']);
         $user = Auth::user();
@@ -132,34 +159,34 @@ class AuthController extends Controller
         $n8n_webhook_url = "https://portative-practicable-lovie.ngrok-free.dev/webhook/c1f8d15b-e096-47f8-922e-a7484ebbc25c/chat";
         $sessionId = $request->session_id ?? Session::get('chat_session_id');
 
+        // FIX TIMEZONE: Ambil waktu sekarang di Makassar
+        $waktuSekarang = Carbon::now('Asia/Makassar');
+
         try {
-            // 1. Kirim ke AI (N8N)
             $response = Http::post($n8n_webhook_url, [
                 'chatInput' => $request->message,
                 'sessionId' => $sessionId,
-                'timestamp' => now()->toDateTimeString()
+                'timestamp' => $waktuSekarang->toDateTimeString()
             ]);
 
             if ($response->successful()) {
                 $aiReply = $response->json()['output'] ?? 'Tidak ada balasan.';
 
-                // 2. SIMPAN KE DATABASE (Agar masuk ke Laporan)
-                // Insert ke tabel counseling_sessions
+                // Simpan ke DB dengan waktu lokal
                 $sessionIdDb = DB::table('counseling_sessions')->insertGetId([
                     'user_id' => $user->id,
-                    'date' => now(),
-                    'duration' => 5, // Estimasi durasi chat (menit)
+                    'date' => $waktuSekarang, // Masuk database sesuai waktu lokal
+                    'duration' => 5,
                     'status' => 'completed',
-                    'created_at' => now()
+                    'created_at' => $waktuSekarang
                 ]);
 
-                // Insert ke tabel medical_records (Hasil Chat)
                 DB::table('medical_records')->insert([
                     'session_id' => $sessionIdDb,
                     'diagnosis' => 'Konsultasi AI',
-                    'notes' => 'User: ' . $request->message, // Simpan pertanyaan user
-                    'prescription' => $aiReply, // Simpan jawaban AI sebagai saran
-                    'created_at' => now()
+                    'notes' => 'User: ' . $request->message,
+                    'prescription' => $aiReply,
+                    'created_at' => $waktuSekarang
                 ]);
 
                 return response()->json([
@@ -175,14 +202,9 @@ class AuthController extends Controller
         }
     }
 
-    // =========================================
-    // 4. LAPORAN (MENGAMBIL DARI DATABASE)
-    // =========================================
-
     public function laporan() {
         $user = Auth::user();
         
-        // Ambil data dari tabel counseling_sessions & medical_records
         $reports = DB::table('counseling_sessions')
             ->leftJoin('medical_records', 'counseling_sessions.id', '=', 'medical_records.session_id')
             ->where('counseling_sessions.user_id', $user->id)
@@ -206,27 +228,6 @@ class AuthController extends Controller
         ];
 
         return view('laporan', compact('user', 'reports', 'stats'));
-    }
-    public function jadwal() {
-        $user = Auth::user();
-
-        // Ambil data jadwal sesi dari tabel counseling_sessions
-        // Kita akan mengambil sesi yang statusnya 'scheduled' (akan datang) dan 'completed' (selesai)
-        $schedules = DB::table('counseling_sessions')
-            ->where('user_id', $user->id)
-            ->orderBy('date', 'desc') // Urutkan dari yang terbaru
-            ->get();
-
-        // Kelompokkan jadwal menjadi "Akan Datang" dan "Riwayat Sesi"
-        $upcomingSchedules = $schedules->filter(function ($item) {
-            return $item->status === 'scheduled' && \Carbon\Carbon::parse($item->date)->isFuture();
-        });
-
-        $pastSchedules = $schedules->filter(function ($item) {
-            return $item->status === 'completed' || $item->status === 'cancelled' || \Carbon\Carbon::parse($item->date)->isPast();
-        });
-
-        return view('jadwal', compact('user', 'upcomingSchedules', 'pastSchedules'));
     }
 
     public function logout(Request $request) {
