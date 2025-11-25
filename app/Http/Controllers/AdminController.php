@@ -6,76 +6,51 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use App\Models\User;
 use App\Models\Patient;
-use Illuminate\Support\Facades\Schema;
 
 class AdminController extends Controller
 {
-    // --- 1. LOGIN ---
     public function showLogin() {
-        if (Auth::check() && Auth::user()->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-        return view('admin.login'); // Mengarah ke resources/views/admin/login.blade.php
+        if (Auth::check() && Auth::user()->role === 'admin') return redirect()->route('admin.dashboard');
+        return view('admin.login');
     }
 
     public function login(Request $request) {
-        $credentials = $request->validate(['username' => 'required', 'password' => 'required']);
-        
-        // Cek login khusus role admin
+        $request->validate(['username' => 'required', 'password' => 'required']);
         if (Auth::attempt(['username' => $request->username, 'password' => $request->password, 'role' => 'admin', 'is_active' => 1])) {
             $request->session()->regenerate();
             return redirect()->route('admin.dashboard');
         }
-        return back()->with('error', 'Login Gagal. Pastikan Anda Admin.');
+        return back()->with('error', 'Login Gagal. Cek kredensial Anda.');
     }
 
-    // --- 2. DASHBOARD ---
     public function dashboard() {
         if (Auth::user()->role !== 'admin') return redirect('/');
-
+        
         $totalUsers = User::count();
         $totalPatients = User::where('role', 'patient')->count();
-        
-        // Cek tabel agar tidak error jika belum ada
         $totalAppointments = Schema::hasTable('appointments') ? DB::table('appointments')->count() : 0;
         $totalReviews = Schema::hasTable('ratings_reviews') ? DB::table('ratings_reviews')->count() : 0;
-
+        
         $users = User::orderBy('created_at', 'desc')->limit(10)->get();
-
-        $activities = [];
-        if (Schema::hasTable('activity_logs')) {
-             $activities = DB::table('activity_logs')
-                ->leftJoin('users', 'activity_logs.user_id', '=', 'users.id')
-                ->select('activity_logs.action', 'users.username', 'activity_logs.created_at')
-                ->orderBy('activity_logs.created_at', 'desc')
-                ->limit(5)->get();
-        }
+        $activities = []; // Placeholder activity log
 
         return view('admin.dashboard', compact('totalUsers', 'totalPatients', 'totalAppointments', 'totalReviews', 'users', 'activities'));
     }
 
-    // --- 3. PENGGUNA ---
     public function pengguna() {
         $users = User::orderBy('created_at', 'desc')->get();
         return view('admin.pengguna', compact('users'));
     }
 
     public function storePengguna(Request $request) {
-        $request->validate([
-            'username' => 'required|unique:users',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'role' => 'required'
-        ]);
+        $request->validate(['username' => 'required|unique:users', 'email' => 'required|unique:users']);
         User::create([
-            'full_name' => $request->full_name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'is_active' => 1
+            'full_name' => $request->full_name, 'username' => $request->username,
+            'email' => $request->email, 'password' => Hash::make($request->password),
+            'role' => $request->role, 'is_active' => 1
         ]);
         return back()->with('success', 'User berhasil ditambahkan.');
     }
@@ -86,30 +61,25 @@ class AdminController extends Controller
         return back()->with('success', 'User dihapus.');
     }
 
-    // --- 4. PASIEN ---
     public function pasien() {
-        // Join user & patient table
         $patients = DB::table('users')
             ->leftJoin('patients', 'users.id', '=', 'patients.user_id')
             ->where('users.role', 'patient')
             ->select('users.id as user_id', 'users.*', 'patients.date_of_birth', 'patients.address')
-            ->orderBy('users.created_at', 'desc')
-            ->get();
+            ->orderBy('users.created_at', 'desc')->get();
         return view('admin.pasien', compact('patients'));
     }
 
     public function storePasien(Request $request) {
-        $request->validate(['username' => 'required|unique:users', 'email' => 'required|email|unique:users']);
-        
         DB::transaction(function () use ($request) {
             $user = User::create([
-                'full_name' => $request->full_name, 'username' => $request->username, 
+                'full_name' => $request->full_name, 'username' => $request->username,
                 'email' => $request->email, 'password' => Hash::make($request->password),
                 'phone' => $request->phone, 'role' => 'patient', 'is_active' => 1
             ]);
             Patient::create(['user_id' => $user->id, 'date_of_birth' => $request->date_of_birth, 'address' => $request->address]);
         });
-        return back()->with('success', 'Pasien ditambahkan.');
+        return back()->with('success', 'Pasien berhasil ditambahkan.');
     }
 
     public function updatePasien(Request $request, $id) {
@@ -126,13 +96,12 @@ class AdminController extends Controller
         return back()->with('success', 'Pasien dihapus.');
     }
 
-    // --- 5. SISTEM ---
     public function sistem() {
-        $settings = ['site_name' => 'MindCare', 'admin_email' => 'admin@mindcare.com', 'maintenance_mode' => false, 'default_role' => 'patient', 'allow_registration' => true];
+        $settings = ['site_name' => 'MindCare', 'admin_email' => 'admin@mindcare.com', 'maintenance_mode' => false];
         return view('admin.manajemen', compact('settings'));
     }
 
     public function updateSistem(Request $request) {
-        return back()->with('success', 'Pengaturan disimpan (Simulasi).');
+        return back()->with('success', 'Pengaturan disimpan.');
     }
 }

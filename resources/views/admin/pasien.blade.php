@@ -1,167 +1,280 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manajemen Pasien - MindCare</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="{{ asset('style.css') }}">
-  <style>
-     .modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; }
-     .modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;}
-     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Pasien - MindCare</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('style.css') }}">
+
+    <style>
+        /* Style Tambahan Khusus Halaman Pasien */
+        .patient-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .patient-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .patient-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-color: #cbd5e1;
+        }
+
+        .patient-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .patient-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .patient-info h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .patient-info p {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .patient-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tag-diagnosis { background: #f0f9ff; color: #0284c7; }
+        .tag-age { background: #f1f5f9; color: #475569; }
+
+        .patient-stats {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+
+        .stat-item {
+            color: #64748b;
+        }
+        .stat-item span {
+            display: block;
+            color: #0f172a;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .btn-detail {
+            width: 100%;
+            margin-top: 16px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            color: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-detail:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .search-box {
+            background: white;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 300px;
+        }
+        .search-box input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-  <div class="dashboard-container">
-    <aside class="sidebar">
-      <div class="logo">
-          <div class="logo-icon"><i class="fas fa-brain"></i></div>
-          <div class="logo-text"><span class="logo-title">MindCare</span><span class="logo-subtitle">Admin Panel</span></div>
-      </div>
-      <nav>
-        <ul class="nav-menu">
-            <li class="nav-section">
-                <div class="nav-section-title">Manajemen Admin</div>
-                <ul>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                            <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.pasien') }}" class="nav-link {{ request()->routeIs('admin.pasien') ? 'active' : '' }}">
-                            <i class="fas fa-users"></i><span>Manajemen Pasien</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.pengguna') }}" class="nav-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}">
-                            <i class="fas fa-users-cog"></i><span>Manajemen Pengguna</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.sistem') }}" class="nav-link {{ request()->routeIs('admin.sistem') ? 'active' : '' }}">
-                            <i class="fas fa-cogs"></i><span>Manajemen Sistem</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li class="nav-section">
-                <ul>
-                    <li class="nav-item"><a href="{{ route('logout') }}" class="nav-link" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
-                </ul>
-            </li>
-        </ul>
-      </nav>
-    </aside>
-
-    <main class="main-content">
-      <header class="header fade-in">
-        <div class="header-top">
-            <div class="welcome-text"><h1>Manajemen Pasien</h1><p>Kelola data pasien terdaftar.</p></div>
-            <div class="header-actions"><button onclick="openTambahModal()" class="btn btn-primary"><i class="fas fa-user-plus"></i> Tambah Pasien</button></div>
-        </div>
-      </header>
-
-      <div class="content-wrapper">
-        <div class="card fade-in">
-            <div class="card-body report-table-container">
-                <table class="report-table">
-                <thead>
-                    <tr><th>Nama</th><th>Email</th><th>Telepon</th><th>Status</th><th>Aksi</th></tr>
-                </thead>
-                <tbody>
-                    @forelse($patients as $p)
-                    <tr>
-                        <td>{{ $p->full_name }}</td>
-                        <td>{{ $p->email }}</td>
-                        <td><span class="status-badge {{ $p->is_active ? 'status-aktif' : 'status-nonaktif' }}">{{ $p->is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
-                        <td>
-                            <button onclick="openEditModal({{ json_encode($p) }})" class="btn-edit"><i class="fas fa-pen"></i></button>
-                            <form action="{{ route('admin.pasien.destroy', $p->user_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus pasien ini?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn-hapus"><i class="fas fa-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="5" class="empty-state">Tidak ada data pasien.</td></tr>
-                    @endforelse
-                </tbody>
-                </table>
-            </div>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <div id="tambahModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>Tambah Pasien Baru</h3>
-        <form action="{{ route('admin.pasien.store') }}" method="POST">
-            @csrf
-            <div class="form-grid">
-                <div class="form-group"><label>Nama Lengkap</label><input type="text" name="full_name" required></div>
-                <div class="form-group"><label>Username</label><input type="text" name="username" required></div>
-            </div>
-            <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
-            <div class="form-group"><label>Password</label><input type="password" name="password" required></div>
-            <div class="form-grid">
-                <div class="form-group"><label>Tgl Lahir</label><input type="date" name="date_of_birth"></div>
-            </div>
-            <div class="form-group"><label>Alamat</label><textarea name="address" rows="2" style="width:100%;"></textarea></div>
-            <div class="modal-footer">
-                <button type="button" onclick="closeTambahModal()" class="btn btn-secondary">Batal</button>
-                <button type="submit" class="btn btn-primary">Simpan</button>
-            </div>
-        </form>
-    </div>
-  </div>
-
-  <div id="editModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>Edit Pasien</h3>
-        <form id="editForm" method="POST">
-            @csrf @method('PUT')
-            <div class="form-group"><label>Nama Lengkap</label><input type="text" id="edit_full_name" name="full_name" required></div>
-            <div class="form-grid">
-                <div class="form-group"><label>Telepon</label><input type="text" id="edit_phone" name="phone"></div>
-                <div class="form-group"><label>Status</label>
-                    <select name="is_active" id="edit_is_active">
-                        <option value="1">Aktif</option>
-                        <option value="0">Non-Aktif</option>
-                    </select>
+    <div class="dashboard-container">
+        
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-title" style="color: #8b5cf6;">MindCare</span>
+                    <span class="logo-subtitle">PROFESSIONAL</span>
                 </div>
             </div>
-            <div class="form-group"><label>Tgl Lahir</label><input type="date" id="edit_date_of_birth" name="date_of_birth"></div>
-            <div class="form-group"><label>Alamat</label><textarea id="edit_address" name="address" rows="2" style="width:100%;"></textarea></div>
-            <div class="modal-footer">
-                <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Batal</button>
-                <button type="submit" class="btn btn-primary">Update</button>
+            
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-section">
+                        <div class="nav-section-title">MENU UTAMA</div>
+                        <ul>
+                            <li class="nav-item">
+                                <a href="{{ url('/dashboard') }}" class="nav-link">
+                                    <i class="fas fa-home"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url('/pasien') }}" class="nav-link active" style="background: #f5f3ff; color: #8b5cf6; font-weight: 600;">
+                                    <i class="fas fa-users"></i>
+                                    <span>Profil Pasien</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url('/jadwal') }}" class="nav-link">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Jadwal Konseling</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url('/chat') }}" class="nav-link">
+                                    <i class="fas fa-comments"></i>
+                                    <span>Chat Dokter AI</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-section">
+                        <div class="nav-section-title">LAPORAN</div>
+                        <ul>
+                             <li class="nav-item">
+                                <a href="{{ url('/laporan') }}" class="nav-link">
+                                    <i class="fas fa-file-alt"></i>
+                                    <span>Laporan</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-section">
+                        <div class="nav-section-title">AKUN</div>
+                        <ul>
+                            <li class="nav-item">
+                                <a href="{{ url('/logout') }}" class="nav-link" style="color: #ef4444;">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header fade-in">
+                <div class="header-top">
+                    <div class="welcome-text">
+                        <h1>Daftar Pasien</h1>
+                        <p>Kelola data dan rekam medis pasien Anda.</p>
+                    </div>
+                    <div class="header-actions" style="display:flex; align-items:center; gap: 12px;">
+                        <div class="search-box">
+                            <i class="fas fa-search" style="color: #94a3b8;"></i>
+                            <input type="text" placeholder="Cari nama pasien...">
+                        </div>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Pasien Baru
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-wrapper fade-in">
+                
+                <div class="patient-grid">
+                    @foreach($patients as $p)
+                    <div class="patient-card">
+                        <div class="patient-header">
+                            <div class="patient-avatar" style="background: {{ $p['color'] }}">
+                                {{ $p['initials'] }}
+                            </div>
+                            <div class="patient-info">
+                                <h3>{{ $p['name'] }}</h3>
+                                <p>{{ $p['gender'] }}</p>
+                            </div>
+                        </div>
+
+                        <div class="patient-tags">
+                            <span class="tag tag-age"><i class="fas fa-birthday-cake"></i> {{ $p['age'] }} Thn</span>
+                            <span class="tag tag-diagnosis">{{ $p['diagnosis'] }}</span>
+                        </div>
+
+                        <div class="patient-stats">
+                            <div class="stat-item">
+                                Status
+                                <span style="color: {{ $p['status'] == 'Active' ? '#16a34a' : '#94a3b8' }}">
+                                    ● {{ $p['status'] }}
+                                </span>
+                            </div>
+                            <div class="stat-item" style="text-align: right;">
+                                Sesi Terakhir
+                                <span>{{ $p['last_session'] }}</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-detail">Lihat Detail Medis</button>
+                    </div>
+                    @endforeach
+                </div>
+
+                @if(empty($patients))
+                <div class="empty-state" style="text-align: center; padding: 60px; color: #94a3b8;">
+                    <i class="fas fa-users" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <p>Belum ada data pasien.</p>
+                </div>
+                @endif
+
             </div>
-        </form>
+        </main>
     </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-      function openTambahModal() { document.getElementById('tambahModal').style.display = 'flex'; }
-      function closeTambahModal() { document.getElementById('tambahModal').style.display = 'none'; }
-      
-      function openEditModal(data) {
-          document.getElementById('editForm').action = "/admin/pasien/" + data.user_id;
-          document.getElementById('edit_full_name').value = data.full_name;
-          document.getElementById('edit_phone').value = data.phone;
-          document.getElementById('edit_is_active').value = data.is_active;
-          document.getElementById('edit_date_of_birth').value = data.date_of_birth;
-          document.getElementById('edit_address').value = data.address;
-          document.getElementById('editModal').style.display = 'flex';
-      }
-      function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
-
-      @if(session('success')) Swal.fire('Sukses', '{{ session('success') }}', 'success'); @endif
-      @if($errors->any()) Swal.fire('Error', '{{ $errors->first() }}', 'error'); @endif
-  </script>
 </body>
 </html>

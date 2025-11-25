@@ -35,7 +35,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link">
+                                <a href="{{ url('/pasien') }}" class="nav-link {{ Request::is('pasien') ? 'active' : '' }}">
                                     <i class="fas fa-users"></i>
                                     <span>Profil Pasien</span>
                                 </a>
