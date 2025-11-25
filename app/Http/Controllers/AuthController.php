@@ -31,6 +31,12 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            
+            // Jika admin login lewat form biasa, arahkan ke dashboard admin
+            if (Auth::user()->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
+            
             return redirect()->intended('/dashboard');
         }
 
@@ -55,7 +61,7 @@ class AuthController extends Controller
             'username'  => $request->username,
             'email'     => $request->email,
             'password'  => Hash::make($request->password),
-            'role'      => 'patient',
+            'role'      => 'patient', // Default role
             'is_active' => 1
         ]);
 
@@ -63,16 +69,20 @@ class AuthController extends Controller
     }
 
     // =========================================
-    // 2. DASHBOARD (METHOD INI YANG HILANG TADI)
+    // 2. DASHBOARD USER (DOKTER/KONSELOR)
     // =========================================
 
     public function dashboard() {
         $user = Auth::user();
 
+        // Jika admin nyasar ke sini, lempar ke admin dashboard
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
         // Data Statistik Dummy
-        $totalPatients = User::where('role', 'patient')->count();
         $stats = [
-            'total_patients'   => $totalPatients > 0 ? $totalPatients : 120,
+            'total_patients'   => 120,
             'today_sessions'   => 8,
             'pending_sessions' => 3,
             'satisfaction_rate'=> 98
@@ -86,14 +96,9 @@ class AuthController extends Controller
                 'created_at' => Carbon::now()
             ],
             [
-                'action'     => 'Update Profil Pasien',
-                'user_name'  => 'Admin Klinik',
-                'created_at' => Carbon::now()->subMinutes(45)
-            ],
-            [
-                'action'     => 'Pengecekan Sistem',
-                'user_name'  => 'System',
-                'created_at' => Carbon::now()->subHours(5)
+                'action'     => 'Update Profil',
+                'user_name'  => 'Admin',
+                'created_at' => Carbon::now()->subHours(2)
             ]
         ];
 
@@ -115,56 +120,54 @@ class AuthController extends Controller
     }
 
     // =========================================
-    // 3. HALAMAN LAPORAN
+    // 3. HALAMAN PROFIL PASIEN (VIEW ONLY)
     // =========================================
 
-    public function laporan() {
+    public function pasien() {
         $user = Auth::user();
-        
-        $reportStats = [
-            'pendapatan' => 'Rp 12.500.000',
-            'kenaikan_pasien' => '+15%',
-            'sesi_selesai' => 45,
-            'ratarata_durasi' => '55 Menit'
+
+        // Data Dummy Pasien untuk Tampilan User
+        $patients = [
+            [
+                'id' => 1, 'name' => 'Budi Santoso', 'age' => 28, 'gender' => 'Pria',
+                'diagnosis' => 'Anxiety Disorder', 'last_session' => '25 Nov 2025',
+                'status' => 'Active', 'initials' => 'BS', 'color' => '#3b82f6'
+            ],
+            [
+                'id' => 2, 'name' => 'Siti Aminah', 'age' => 24, 'gender' => 'Wanita',
+                'diagnosis' => 'Mild Depression', 'last_session' => '22 Nov 2025',
+                'status' => 'Active', 'initials' => 'SA', 'color' => '#ec4899'
+            ],
+            [
+                'id' => 3, 'name' => 'Rudi Hartono', 'age' => 35, 'gender' => 'Pria',
+                'diagnosis' => 'Stress Management', 'last_session' => '20 Nov 2025',
+                'status' => 'Inactive', 'initials' => 'RH', 'color' => '#f59e0b'
+            ]
         ];
 
-        $logs = [
-            ['date' => '2023-10-25', 'patient' => 'Budi Santoso', 'type' => 'Konseling', 'status' => 'Selesai', 'amount' => 'Rp 250.000'],
-            ['date' => '2023-10-24', 'patient' => 'Siti Aminah', 'type' => 'Terapi', 'status' => 'Selesai', 'amount' => 'Rp 300.000'],
-            ['date' => '2023-10-23', 'patient' => 'Rizky Pratama', 'type' => 'Konseling', 'status' => 'Batal', 'amount' => 'Rp 0'],
-        ];
-
-        return view('laporan', compact('user', 'reportStats', 'logs'));
+        return view('pasien', compact('user', 'patients'));
     }
 
     // =========================================
-    // 4. HALAMAN CHAT & KIRIM PESAN (N8N)
+    // 4. FITUR CHAT & LAPORAN
     // =========================================
 
     public function chat() {
         $user = Auth::user();
-        
-        // Generate Chat Session ID jika belum ada
         if (!Session::has('chat_session_id')) {
             Session::put('chat_session_id', uniqid('chat_', true));
         }
         $sessionId = Session::get('chat_session_id');
-
         return view('chat', compact('user', 'sessionId'));
     }
 
     public function sendMessage(Request $request) {
-        $request->validate([
-            'message' => 'required|string'
-        ]);
-
-        // URL N8N Webhook Kamu
-        $n8n_webhook_url = "https://portative-practicable-lovie.ngrok-free.dev/webhook/c1f8d15b-e096-47f8-922e-a7484ebbc25c/chat";
+        $request->validate(['message' => 'required|string']);
         
+        $n8n_webhook_url = "https://portative-practicable-lovie.ngrok-free.dev/webhook/c1f8d15b-e096-47f8-922e-a7484ebbc25c/chat";
         $sessionId = $request->session_id ?? Session::get('chat_session_id');
 
         try {
-            // Kirim request ke N8N menggunakan HTTP Client Laravel
             $response = Http::post($n8n_webhook_url, [
                 'chatInput' => $request->message,
                 'sessionId' => $sessionId,
@@ -175,24 +178,24 @@ class AuthController extends Controller
                 $data = $response->json();
                 return response()->json([
                     'success' => true,
-                    'response' => $data['output'] ?? 'Tidak ada balasan dari AI.',
+                    'response' => $data['output'] ?? 'Tidak ada balasan.',
                     'session_id' => $sessionId
                 ]);
             } else {
-                return response()->json([
-                    'error' => 'Gagal menghubungi N8N',
-                    'details' => $response->body()
-                ], 500);
+                return response()->json(['error' => 'Gagal menghubungi AI'], 500);
             }
-
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Server Error',
-                'details' => $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Server Error'], 500);
         }
     }
-    
+
+    public function laporan() {
+        // Halaman Laporan Dummy
+        $user = Auth::user();
+        $reportStats = ['pendapatan' => 'Rp 12.5M', 'kenaikan_pasien' => '+15%', 'sesi_selesai' => 45];
+        $logs = [];
+        return view('laporan', compact('user', 'reportStats', 'logs'));
+    }
 
     // =========================================
     // 5. LOGOUT
