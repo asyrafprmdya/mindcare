@@ -37,10 +37,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/pengguna/{id}', [AdminController::class, 'destroyPengguna'])->name('pengguna.destroy');
 
      
-        Route::get('/pasien', [AdminController::class, 'pasien'])->name('pasien');
-        Route::post('/pasien', [AdminController::class, 'storePasien'])->name('pasien.store');
-        Route::put('/pasien/{id}', [AdminController::class, 'updatePasien'])->name('pasien.update');
-        Route::delete('/pasien/{id}', [AdminController::class, 'destroyPasien'])->name('pasien.destroy');
+        Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store');
+    Route::delete('/admin/users/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+});
 
         Route::get('/sistem', [AdminController::class, 'sistem'])->name('sistem');
         Route::post('/sistem', [AdminController::class, 'updateSistem'])->name('sistem.update');
