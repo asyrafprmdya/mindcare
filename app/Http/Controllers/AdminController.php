@@ -102,50 +102,34 @@ class AdminController extends Controller
         User::destroy($id);
         return back()->with('success', 'User berhasil dihapus.');
     }
+    public function updatePengguna(Request $request, $id) {
+        $user = User::findOrFail($id);
 
-    // =========================================
-    // 4. MANAJEMEN PASIEN
-    // =========================================
-    public function pasien() {
-        $patients = DB::table('users')
-            ->leftJoin('patients', 'users.id', '=', 'patients.user_id')
-            ->where('users.role', 'patient')
-            ->select('users.id as user_id', 'users.*', 'patients.date_of_birth', 'patients.address')
-            ->orderBy('users.created_at', 'desc')
-            ->get();
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'username'  => 'required|string|unique:users,username,'.$id, // Abaikan unique untuk diri sendiri
+            'email'     => 'required|email|unique:users,email,'.$id,     // Abaikan unique untuk diri sendiri
+            'role'      => 'required',
+            'is_active' => 'required' // Kita perlu ambil status dari form
+        ]);
 
-        return view('admin.pasien', compact('patients'));
+        $data = [
+            'full_name' => $request->full_name,
+            'username'  => $request->username,
+            'email'     => $request->email,
+            'role'      => $request->role,
+            'is_active' => $request->is_active,
+        ];
+
+        // Hanya update password jika field diisi (tidak kosong)
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        return back()->with('success', 'Data pengguna berhasil diperbarui.');
     }
-
-    public function storePasien(Request $request) {
-        $request->validate(['username' => 'required|unique:users', 'email' => 'required|email|unique:users']);
-        
-        DB::transaction(function () use ($request) {
-            $user = User::create([
-                'full_name' => $request->full_name, 'username' => $request->username,
-                'email' => $request->email, 'password' => Hash::make($request->password),
-                'phone' => $request->phone, 'role' => 'patient', 'is_active' => 1
-            ]);
-            Patient::create(['user_id' => $user->id, 'date_of_birth' => $request->date_of_birth, 'address' => $request->address]);
-        });
-
-        return back()->with('success', 'Pasien berhasil ditambahkan.');
-    }
-
-    public function updatePasien(Request $request, $id) {
-        DB::transaction(function () use ($request, $id) {
-            $user = User::findOrFail($id);
-            $user->update(['full_name' => $request->full_name, 'phone' => $request->phone, 'is_active' => $request->is_active]);
-            Patient::updateOrCreate(['user_id' => $id], ['date_of_birth' => $request->date_of_birth, 'address' => $request->address]);
-        });
-        return back()->with('success', 'Data pasien diperbarui.');
-    }
-
-    public function destroyPasien($id) {
-        User::destroy($id);
-        return back()->with('success', 'Data pasien dihapus.');
-    }
-
     // =========================================
     // 5. MANAJEMEN SISTEM
     // =========================================

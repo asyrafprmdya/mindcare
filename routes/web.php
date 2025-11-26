@@ -47,12 +47,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/pengguna', [AdminController::class, 'pengguna'])->name('pengguna');
         Route::post('/pengguna', [AdminController::class, 'storePengguna'])->name('pengguna.store');
         Route::delete('/pengguna/{id}', [AdminController::class, 'destroyPengguna'])->name('pengguna.destroy');
+        Route::put('/pengguna/{id}', [AdminController::class, 'updatePengguna'])->name('pengguna.update');
 
-        // Manajemen Pasien (CRUD Admin)
-        Route::get('/pasien', [AdminController::class, 'pasien'])->name('pasien');
-        Route::post('/pasien', [AdminController::class, 'storePasien'])->name('pasien.store');
-        Route::put('/pasien/{id}', [AdminController::class, 'updatePasien'])->name('pasien.update');
-        Route::delete('/pasien/{id}', [AdminController::class, 'destroyPasien'])->name('pasien.destroy');
+
 
         // Manajemen Sistem
         Route::get('/sistem', [AdminController::class, 'sistem'])->name('sistem');
