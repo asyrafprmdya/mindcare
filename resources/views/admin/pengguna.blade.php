@@ -47,7 +47,7 @@
             background: #ffffff; 
             border-bottom: 1px solid #f1f5f9;
             padding: 20px 24px;
-            text-align: left; /* Header rata kiri */
+            text-align: left;
         }
         .custom-table td {
             padding: 16px 24px;
@@ -55,7 +55,7 @@
             font-size: 14px;
             vertical-align: middle;
             border-bottom: 1px solid #f1f5f9;
-            text-align: left; /* Isi data rata kiri */
+            text-align: left;
         }
 
         /* Badges */
@@ -94,7 +94,50 @@
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #334155; }
         .form-control { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+
+        /* SweetAlert2 Custom Styling */
+        .swal2-popup {
+            border-radius: 16px !important;
+            padding: 30px !important;
+        }
+        .swal2-title {
+            font-size: 20px !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+        }
+        .swal2-html-container {
+            font-size: 14px !important;
+            color: #64748b !important;
+        }
+        .swal2-confirm {
+            background: #ef4444 !important;
+            border-radius: 8px !important;
+            padding: 10px 24px !important;
+            font-weight: 600 !important;
+        }
+        .swal2-cancel {
+            background: #f1f5f9 !important;
+            color: #475569 !important;
+            border-radius: 8px !important;
+            padding: 10px 24px !important;
+            font-weight: 600 !important;
+        }
+        .swal2-icon.swal2-warning {
+            border-color: #f59e0b !important;
+            color: #f59e0b !important;
+        }
+        .swal2-icon.swal2-success {
+            border-color: #10b981 !important;
+            color: #10b981 !important;
+        }
+        .swal2-icon.swal2-error {
+            border-color: #ef4444 !important;
+            color: #ef4444 !important;
+        }
     </style>
+
+    <!-- SweetAlert2 CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <div class="card fade-in" style="border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);">
         
@@ -150,9 +193,9 @@
                                     <button class="btn-action btn-edit" title="Edit">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
-                                    <form action="{{ route('admin.pengguna.destroy', $u->id) }}" method="POST" onsubmit="return confirm('Hapus user ini?')">
+                                    <form action="{{ route('admin.pengguna.destroy', $u->id) }}" method="POST" class="delete-form" data-username="{{ $u->username }}">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn-action btn-delete" title="Hapus">
+                                        <button type="button" class="btn-action btn-delete btn-delete-user" title="Hapus">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
@@ -179,7 +222,7 @@
                 <button onclick="closeModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8;">&times;</button>
             </div>
             
-            <form action="{{ route('admin.pengguna.store') }}" method="POST">
+            <form action="{{ route('admin.pengguna.store') }}" method="POST" id="createUserForm">
                 @csrf
                 <div class="form-group">
                     <label>Nama Lengkap</label>
@@ -218,6 +261,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Modal Functions
     function openModal() { document.getElementById('userModal').style.display = 'flex'; }
@@ -233,5 +277,104 @@
             row.style.display = text.includes(filter) ? '' : 'none';
         });
     });
+
+    // SweetAlert2 untuk Delete Confirmation
+    document.querySelectorAll('.btn-delete-user').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('.delete-form');
+            const username = form.dataset.username;
+
+            Swal.fire({
+                title: 'Hapus Pengguna?',
+                html: `Apakah Anda yakin ingin menghapus pengguna <strong>${username}</strong>?<br><small style="color: #94a3b8;">Tindakan ini tidak dapat dibatalkan.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                focusCancel: true,
+                customClass: {
+                    confirmButton: 'swal2-confirm',
+                    cancelButton: 'swal2-cancel'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Menghapus...',
+                        text: 'Mohon tunggu sebentar',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Submit form
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // SweetAlert2 untuk Create User Form
+    document.getElementById('createUserForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        Swal.fire({
+            title: 'Menyimpan...',
+            text: 'Mohon tunggu sebentar',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Submit form
+        this.submit();
+    });
+
+    // SweetAlert2 untuk Success/Error Messages (jika ada session flash)
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: '{{ session('success') }}',
+            confirmButtonText: 'OK',
+            timer: 3000,
+            timerProgressBar: true,
+            customClass: {
+                confirmButton: 'swal2-confirm'
+            }
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: '{{ session('error') }}',
+            confirmButtonText: 'OK',
+            customClass: {
+                confirmButton: 'swal2-confirm'
+            }
+        });
+    @endif
+
+    @if($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Terjadi Kesalahan',
+            html: '<ul style="text-align: left; padding-left: 20px;">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
+            confirmButtonText: 'OK',
+            customClass: {
+                confirmButton: 'swal2-confirm'
+            }
+        });
+    @endif
 </script>
 @endpush

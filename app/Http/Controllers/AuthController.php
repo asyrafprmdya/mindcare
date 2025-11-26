@@ -118,6 +118,7 @@ class AuthController extends Controller
 
         return view('dashboard', compact('user', 'stats', 'recentActivities', 'history'));
     }
+    
     public function pasien() {
         $userId = Auth::id();
         $patient = DB::table('users')
