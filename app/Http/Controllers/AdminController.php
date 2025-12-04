@@ -129,9 +129,6 @@ class AdminController extends Controller
 
         return back()->with('success', 'Data pengguna berhasil diperbarui.');
     }
-    // =========================================
-    // 5. MANAJEMEN SISTEM
-    // =========================================
     public function sistem() {
         $settings = ['site_name' => 'MindCare', 'admin_email' => 'admin@mindcare.com', 'maintenance_mode' => false, 'default_role' => 'patient', 'allow_registration' => true];
         return view('admin.manajemen', compact('settings'));

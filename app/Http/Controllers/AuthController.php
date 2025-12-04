@@ -72,10 +72,6 @@ class AuthController extends Controller
         return redirect('/')->with('register_success', 'Akun berhasil dibuat! Silakan login.');
     }
 
-    // =========================================
-    // 2. DASHBOARD & PROFIL (USER)
-    // =========================================
-
    // =========================================
     // 2. DASHBOARD (USER)
     // =========================================
